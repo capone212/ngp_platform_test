@@ -46,7 +46,10 @@ def clean():
     #clen dirrectories
     shutil.rmtree(AXXON_NEXT_LOG_DIR, ignore_errors=True)
     time.sleep(1)
-    os.makedirs(AXXON_NEXT_LOG_DIR)
+    try:
+        os.makedirs(AXXON_NEXT_LOG_DIR)
+    except Exception, e:
+        pass
 
 
 def is_crashes_exists():

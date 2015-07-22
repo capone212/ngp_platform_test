@@ -8,6 +8,8 @@ import systemutils
 import support
 import shutil
 
+from random import randint
+
 from itexceptions import ItGeneralError
 from itexceptions import ItBaseException
 from systemutils import get_ngp_process_list
@@ -19,6 +21,12 @@ from definitions import IP_ADDRESS_CHANGE_NIC_ID
 from definitions import TEST_SUPPORT_ROOT_DIRR
 
 _logger = logging.getLogger("ap_address_change")
+
+MAX_TEST_CYCLES = 100;
+MAX_WAIT_TIME_SECONDS = 90
+CHECK_INTERVAL_SECONDS = 3
+MAX_WAIT_TIME_AFTER_START = 25
+
 
 def init_debug_logger(logger):
     # Set Log level
@@ -46,17 +54,16 @@ TC_STATUS_FAILED = "FAILED"
 # test case execution terminated on error 
 TC_STATUS_ERROR = "ERROR"
 
-
-MAX_WAIT_TIME_SECONDS = 90
-CHECK_INTERVAL_SECONDS = 3
-
 def run_once():
     #clean
     _logger.info("Starting ngp...")
     systemutils.start_ngp_service(_logger)
     _logger.info("Waiting random time...")
+    
     # TODO: random time out
-    time.sleep(1);
+    #time.sleep(randint(0, MAX_WAIT_TIME_AFTER_START));
+    time.sleep(60);
+
     _logger.info("Getting current ngp process list...")
     process_list_orig = get_ngp_process_list()
     if (not process_list_orig):
@@ -78,8 +85,6 @@ def run_once():
     # exec command
     return TC_STATUS_OK
 
-MAX_TEST_CYCLES = 10;
-
 def get_folder_for_task(task_no):
     task_folder = TEST_SUPPORT_ROOT_DIRR + "/" +str(task_no)
     shutil.rmtree(task_folder, ignore_errors=True)
@@ -87,8 +92,9 @@ def get_folder_for_task(task_no):
     os.makedirs(task_folder)
     return task_folder
 
+
 def run_test():
-    for i in range(1, MAX_TEST_CYCLES):
+    for i in range(0, MAX_TEST_CYCLES):
         support.clean()
         _logger.info("-"*80)
         _logger.info("Run test #%s", i)
@@ -99,13 +105,11 @@ def run_test():
             result = TC_STATUS_ERROR
         if (support.is_crashes_exists()):
             _logger.warn("Found crash dumps after test cycle!")
-            result = TC_STATUS_ERROR
+            #result = TC_STATUS_ERROR
         if result != TC_STATUS_OK:
             support.collect_support_info(
                 get_folder_for_task(i))
         _logger.info("Test #%s finished. Status = %s", i, result)
-
-
 
 
 if __name__ == "__main__":
