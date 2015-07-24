@@ -20,6 +20,12 @@ def start_ngp_service(logger):
     except ItBaseException as exc:
         logger.info("start_ngp returned error %s", repr(exc))
 
+def stop_ngp_service(logger):
+    try:
+        return exec_command("net stop ngp_host_service")
+    except ItBaseException as exc:
+        logger.info("stop_ngp returned error %s", repr(exc))
+
 def get_ngp_process_list():
     ngp_app_names = [u'AppHost.exe', u'AppHostSvc.exe']
     return [p for p in psutil.process_iter() if p.name() in ngp_app_names]

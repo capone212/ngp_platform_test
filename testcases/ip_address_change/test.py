@@ -16,16 +16,17 @@ from systemutils import get_ngp_process_list
 from systemutils import exec_command
 from systemutils import wait_process_to_finish
 from systemutils import wait_ngp_to_start
+from systemutils import stop_ngp_service
 
 from definitions import IP_ADDRESS_CHANGE_NIC_ID
 from definitions import TEST_SUPPORT_ROOT_DIRR
 
 _logger = logging.getLogger("ap_address_change")
 
-MAX_TEST_CYCLES = 100;
+MAX_TEST_CYCLES = 50;
 MAX_WAIT_TIME_SECONDS = 90
 CHECK_INTERVAL_SECONDS = 3
-MAX_WAIT_TIME_AFTER_START = 25
+MAX_WAIT_TIME_AFTER_START = 20
 
 
 def init_debug_logger(logger):
@@ -42,9 +43,9 @@ def init_debug_logger(logger):
 def simulate_ipaddress_change():
     # wmic path win32_networkadapter where index=14 call enable
     NIC_ID = IP_ADDRESS_CHANGE_NIC_ID
-    exec_command("wmic path win32_networkadapter where index=%s call enable" % NIC_ID)
-    time.sleep(5);
     exec_command("wmic path win32_networkadapter where index=%s call disable" % NIC_ID)
+    time.sleep(5);
+    exec_command("wmic path win32_networkadapter where index=%s call enable" % NIC_ID)
 
 
 # system passed test case 
@@ -61,8 +62,7 @@ def run_once():
     _logger.info("Waiting random time...")
     
     # TODO: random time out
-    #time.sleep(randint(0, MAX_WAIT_TIME_AFTER_START));
-    time.sleep(60);
+    time.sleep(randint(0, MAX_WAIT_TIME_AFTER_START));
 
     _logger.info("Getting current ngp process list...")
     process_list_orig = get_ngp_process_list()
@@ -95,9 +95,11 @@ def get_folder_for_task(task_no):
 
 def run_test():
     for i in range(0, MAX_TEST_CYCLES):
-        support.clean()
         _logger.info("-"*80)
         _logger.info("Run test #%s", i)
+        _logger.info("Clean up")
+        stop_ngp_service(_logger)
+        support.clean()
         result = "undefined"
         try:
             result = run_once()
@@ -105,10 +107,10 @@ def run_test():
             result = TC_STATUS_ERROR
         if (support.is_crashes_exists()):
             _logger.warn("Found crash dumps after test cycle!")
-            #result = TC_STATUS_ERROR
+            result = TC_STATUS_ERROR
         if result != TC_STATUS_OK:
             support.collect_support_info(
-                get_folder_for_task(i))
+               get_folder_for_task(i))
         _logger.info("Test #%s finished. Status = %s", i, result)
 
 

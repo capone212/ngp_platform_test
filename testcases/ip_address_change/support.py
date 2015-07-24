@@ -58,3 +58,5 @@ def is_crashes_exists():
             if file.endswith(".dmp"):
                 return True
     return False
+
+#create_dumps_of_live_process("G:/temp/test_support_root")
