@@ -23,10 +23,10 @@ from definitions import TEST_SUPPORT_ROOT_DIRR
 
 _logger = logging.getLogger("ap_address_change")
 
-MAX_TEST_CYCLES = 50;
+MAX_TEST_CYCLES = 1000;
 MAX_WAIT_TIME_SECONDS = 90
 CHECK_INTERVAL_SECONDS = 3
-MAX_WAIT_TIME_AFTER_START = 20
+MAX_WAIT_TIME_AFTER_START = 5 * 60
 
 
 def init_debug_logger(logger):
@@ -86,11 +86,15 @@ def run_once():
     return TC_STATUS_OK
 
 def get_folder_for_task(task_no):
-    task_folder = TEST_SUPPORT_ROOT_DIRR + "/" +str(task_no)
-    shutil.rmtree(task_folder, ignore_errors=True)
-    time.sleep(0.5)
-    os.makedirs(task_folder)
-    return task_folder
+    try:
+        task_folder = TEST_SUPPORT_ROOT_DIRR + "/" +str(task_no)
+        shutil.rmtree(task_folder, ignore_errors=True)
+        time.sleep(0.5)
+        os.makedirs(task_folder)
+        return task_folder
+    except Exception, e:
+        time.sleep(5)
+        return get_folder_for_task(task_no)
 
 
 def run_test():
@@ -103,7 +107,9 @@ def run_test():
         result = "undefined"
         try:
             result = run_once()
-        except Exception, e:
+        except Exception as err:
+            _logger.error("Error occured while execution task %s", repr(err))
+
             result = TC_STATUS_ERROR
         if (support.is_crashes_exists()):
             _logger.warn("Found crash dumps after test cycle!")

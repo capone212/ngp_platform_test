@@ -27,14 +27,20 @@ def stop_ngp_service(logger):
         logger.info("stop_ngp returned error %s", repr(exc))
 
 def get_ngp_process_list():
-    ngp_app_names = [u'AppHost.exe', u'AppHostSvc.exe']
-    return [p for p in psutil.process_iter() if p.name() in ngp_app_names]
+    try:
+        ngp_app_names = [u'AppHost.exe', u'AppHostSvc.exe']
+        return [p for p in psutil.process_iter() if p.name() in ngp_app_names]
+    except Exception, e:
+        return get_ngp_process_list()
 
 # Returns list of alive process's PID
 def get_process_alive(process_list):
-    crrent_list = set(map(lambda x: x.pid ,psutil.process_iter()))
-    list_to_test = set(map(lambda x: x.pid ,process_list))
-    return set.intersection(crrent_list, list_to_test)
+    try:
+        crrent_list = set(map(lambda x: x.pid ,psutil.process_iter()))
+        list_to_test = set(map(lambda x: x.pid ,process_list))
+        return set.intersection(crrent_list, list_to_test)
+    except Exception as ex:
+        return get_process_alive(process_list)
 
 # Returns set of alive process after wait
 def wait_process_to_finish(max_wait_sec, check_intvl_sec, process_list):
@@ -56,8 +62,11 @@ def wait_ngp_to_start(max_wait_sec, check_intvl_sec):
     return False
 
 def kill_ngp_processes():
-    for p in get_ngp_process_list():
-        try:
-            p.kill()
-        except Exception, e:
-            pass
+    try:
+        for p in get_ngp_process_list():
+            try:
+                p.kill()
+            except Exception as e:
+                pass
+    except Exception as e:
+        kill_ngp_processes()
