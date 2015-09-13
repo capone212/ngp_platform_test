@@ -20,13 +20,14 @@ from systemutils import stop_ngp_service
 
 from definitions import IP_ADDRESS_CHANGE_NIC_ID
 from definitions import TEST_SUPPORT_ROOT_DIRR
+from definitions import IP_ADDRESS_CHANGE_NIC_NAME
 
 _logger = logging.getLogger("ap_address_change")
 
 MAX_TEST_CYCLES = 1000;
-MAX_WAIT_TIME_SECONDS = 90
+MAX_WAIT_TIME_SECONDS = 300
 CHECK_INTERVAL_SECONDS = 3
-MAX_WAIT_TIME_AFTER_START = 5 * 60
+MAX_WAIT_TIME_AFTER_START = 60
 
 
 def init_debug_logger(logger):
@@ -46,6 +47,11 @@ def simulate_ipaddress_change():
     exec_command("wmic path win32_networkadapter where index=%s call disable" % NIC_ID)
     time.sleep(5);
     exec_command("wmic path win32_networkadapter where index=%s call enable" % NIC_ID)
+
+def simulate_ipaddress_change2():
+    # netsh interface ip set address name=VMnet1 static 172.16.0.22
+    exec_command("netsh interface ip set address name=%s static 172.16.0.%s" %
+        (IP_ADDRESS_CHANGE_NIC_NAME, randint(1, 254)))
 
 
 # system passed test case 
@@ -70,7 +76,7 @@ def run_once():
         _logger.warn("Current ngp process list empty!")
         return TC_STATUS_FAILED
     _logger.info("Simulate ip address table change...")
-    simulate_ipaddress_change()
+    simulate_ipaddress_change2()
     _logger.info("Wait ngp processes to exit...")
     remain = wait_process_to_finish(MAX_WAIT_TIME_SECONDS,
         CHECK_INTERVAL_SECONDS, process_list_orig)
@@ -102,7 +108,7 @@ def run_test():
         _logger.info("-"*80)
         _logger.info("Run test #%s", i)
         _logger.info("Clean up")
-        stop_ngp_service(_logger)
+        #stop_ngp_service(_logger)
         support.clean()
         result = "undefined"
         try:

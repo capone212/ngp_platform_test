@@ -42,7 +42,7 @@ def collect_support_info(support_path):
 
 def clean():
     kill_ngp_processes()
-    time.sleep(1)
+    time.sleep(3)
     #clen dirrectories
     shutil.rmtree(AXXON_NEXT_LOG_DIR, ignore_errors=True)
     time.sleep(1)
