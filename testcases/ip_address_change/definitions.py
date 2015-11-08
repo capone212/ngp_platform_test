@@ -15,3 +15,5 @@ PROC_DUMP_PATH = "g:/dumps/procdump.exe"
 
 #
 AXXON_NEXT_LOG_DIR = "C:/ProgramData/AxxonSoft/AxxonNext/Logs"
+
+NGP_SHELL_PATH = "'C:/Program Files/AxxonSoft/AxxonSmart/bin/ngpsh.exe'"

@@ -17,6 +17,7 @@ from systemutils import exec_command
 from systemutils import wait_process_to_finish
 from systemutils import wait_ngp_to_start
 from systemutils import stop_ngp_service
+from systemutils import check_ngp_hostagent
 
 from definitions import IP_ADDRESS_CHANGE_NIC_ID
 from definitions import TEST_SUPPORT_ROOT_DIRR
@@ -27,7 +28,7 @@ _logger = logging.getLogger("ap_address_change")
 MAX_TEST_CYCLES = 1000;
 MAX_WAIT_TIME_SECONDS = 300
 CHECK_INTERVAL_SECONDS = 3
-MAX_WAIT_TIME_AFTER_START = 60
+MAX_WAIT_TIME_AFTER_START = 20
 
 
 def init_debug_logger(logger):
@@ -50,8 +51,10 @@ def simulate_ipaddress_change():
 
 def simulate_ipaddress_change2():
     # netsh interface ip set address name=VMnet1 static 172.16.0.22
-    exec_command("netsh interface ip set address name=%s static 172.16.0.%s" %
-        (IP_ADDRESS_CHANGE_NIC_NAME, randint(1, 254)))
+    ipaddress = "172.16.0.%s" % randint(1, 254)
+    exec_command("netsh interface ip set address name=%s static %s" %
+        (IP_ADDRESS_CHANGE_NIC_NAME, ipaddress))
+    return ipaddress
 
 
 # system passed test case 
@@ -76,7 +79,7 @@ def run_once():
         _logger.warn("Current ngp process list empty!")
         return TC_STATUS_FAILED
     _logger.info("Simulate ip address table change...")
-    simulate_ipaddress_change2()
+    ipaddress = simulate_ipaddress_change2()
     _logger.info("Wait ngp processes to exit...")
     remain = wait_process_to_finish(MAX_WAIT_TIME_SECONDS,
         CHECK_INTERVAL_SECONDS, process_list_orig)
@@ -87,6 +90,9 @@ def run_once():
     started = wait_ngp_to_start(MAX_WAIT_TIME_SECONDS, CHECK_INTERVAL_SECONDS)
     if not started:
         _logger.warn("NGP did not start after %s seconds", MAX_WAIT_TIME_SECONDS)
+        return TC_STATUS_FAILED
+    if not check_ngp_hostagent(_logger, ipaddress):
+        _logger.warn("NGP started but it seems does not work!")
         return TC_STATUS_FAILED
     # exec command
     return TC_STATUS_OK
@@ -119,10 +125,11 @@ def run_test():
             result = TC_STATUS_ERROR
         if (support.is_crashes_exists()):
             _logger.warn("Found crash dumps after test cycle!")
-            result = TC_STATUS_ERROR
+            #result = TC_STATUS_ERROR
         if result != TC_STATUS_OK:
             support.collect_support_info(
                get_folder_for_task(i))
+            return
         _logger.info("Test #%s finished. Status = %s", i, result)
 
 

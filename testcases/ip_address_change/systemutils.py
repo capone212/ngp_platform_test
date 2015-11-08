@@ -4,6 +4,8 @@ import shlex
 import psutil
 import time
 
+
+from definitions import NGP_SHELL_PATH
 from itexceptions import ItGeneralError
 from itexceptions import ItBaseException
 
@@ -25,6 +27,14 @@ def stop_ngp_service(logger):
         return exec_command("net stop ngp_host_service")
     except ItBaseException as exc:
         logger.info("stop_ngp returned error %s", repr(exc))
+
+def check_ngp_hostagent(logger, ipaddress):
+    try:
+        exec_command(NGP_SHELL_PATH + " -ORBDefaultInitRef corbaloc:iiop:1.2@%s:49999 hostagent info" % ipaddress)
+        return True
+    except ItBaseException as exc:
+        logger.info("check_ngp_hostagent error %s", repr(exc))
+        return False
 
 def get_ngp_process_list():
     try:
